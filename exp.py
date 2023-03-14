@@ -10,7 +10,6 @@ from tqdm import tqdm
 from API import *
 from utils import *
 
-
 class Exp:
     def __init__(self, args):
         super(Exp, self).__init__()
@@ -59,7 +58,7 @@ class Exp:
                             filemode='a', format='%(asctime)s - %(message)s')
         
         # prepare data : 데이터 로드
-        self._get_data()
+        # self._get_data()
         # build the model : SimVP 모델 로드
         self._build_model()
 
@@ -98,22 +97,11 @@ class Exp:
         fw = open(os.path.join(self.checkpoints_path, name + '.pkl'), 'wb')
         pickle.dump(state, fw)
 
-        # # custom model save -----------------------------------------#
-        # torch.save(self.model, os.path.join(
-        #     self.checkpoints_path, 'model.pt'))
-        # torch.save(self.model.state_dict(), os.path.join(
-        #         self.checkpoints_path, 'model_state_dict.pt'))
-        # torch.save({
-        #     'epoch': self.args.epochs,
-        #     'model_state_dict': self.model.state_dict(),
-        #     'optimizer_state_dict': self.optimizer.state_dict(),
-        #     'loss': self.criterion,
-        #     }, os.path.join(self.checkpoints_path, 'checkpoint.tar'))
-        # # ------------------------------------------------------------#
-
+    # Train
     def train(self, args):
         config = args.__dict__
         recorder = Recorder(verbose=True)
+        save_model_config(self.model, self.optimizer, self.criterion, self.path+'/'+'model_config.txt')
         timechecker = TimeHistory('Training')
 
         timechecker.begin()
@@ -194,7 +182,13 @@ class Exp:
         trues = np.concatenate(trues_lst, axis=0)
 
         # 평가지표 계산 및 출력.
-        mse, mae, ssim, psnr = metric(preds, trues, vali_loader.dataset.mean, vali_loader.dataset.std, True)
+        if self.args.dataname == 'kth':
+            vali_loader_mean = self.vali_loader.dataset[0][0].mean().numpy()
+            vali_loader_std = self.vali_loader.dataset[0][0].std().numpy()
+        else:
+            vali_loader_mean = self.vali_loader.dataset.mean
+            vali_loader_std = self.vali_loader.dataset.std
+        mse, mae, ssim, psnr = metric(preds, trues, vali_loader_mean, vali_loader_std, True)
         print_log('vali mse:{:.4f}, mae:{:.4f}, ssim:{:.4f}, psnr:{:.4f}'.format(mse, mae, ssim, psnr))
 
         # 다시 훈련 모드로 변환.
@@ -222,7 +216,13 @@ class Exp:
             os.makedirs(folder_path)
 
         # Test 결과 평가 지표 계산 및 출력.
-        mse, mae, ssim, psnr = metric(preds, trues, self.test_loader.dataset.mean, self.test_loader.dataset.std, True)
+        if self.args.dataname == 'kth':
+            test_loader_mean = self.test_loader.dataset[0][0].mean().numpy()
+            test_loader_std = self.test_loader.dataset[0][0].std().numpy()
+        else:
+            test_loader_mean = self.test_loader.dataset.mean
+            test_loader_std = self.test_loader.dataset.std
+        mse, mae, ssim, psnr = metric(preds, trues, test_loader_mean, test_loader_std, True)
         print_log('mse:{:.4f}, mae:{:.4f}, ssim:{:.4f}, psnr:{:.4f}'.format(mse, mae, ssim, psnr))
 
         # Test 출력 결과 저장.

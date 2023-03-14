@@ -59,4 +59,35 @@ class TimeHistory():
             
             if local_print : print(f'{self.name} : {result}')
             else: print_log(f'{self.name} : {result}')
+
+# Save Model config
+def save_model_config(model, optim, loss, path):
+    f = open(path, 'w')
+    
+    f.write('Models Children:\n')
+    for child in model.children():
+        f.write('===')
+        f.write(f'{child}')
+    
+    # f.write('\n\n')
+    # f.write("Model's state_dict:\n")
+    # for param_tensor in model.state_dict():
+    #     f.write(param_tensor, "\t", model.state_dict()[param_tensor].size())
+
+    # f.write('\n\n')
+    # f.write('Models named modules')
+    # for name,layer in model.named_modules():
+    #     f.write(name,layer)
+
+    # f.write('\n\n')
+    # f.write("Optimizer's state_dict:")
+    # for var_name in optim.state_dict():
+    #     f.write(var_name, "\t", optim.state_dict()[var_name])
+
+    # f.write('\n\n')
+    # f.write("loss state_dict:")
+    # for var_name in loss.state_dict():
+    #     f.write(var_name, "\t", loss.state_dict()[var_name])
+
+    f.close()
 # --------------------------------------------------------------------#

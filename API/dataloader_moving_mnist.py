@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import torch.utils.data as data
 
-
+# MMNIST를 만들기 위한 MNIST 로더.
 def load_mnist(root):
     # Load MNIST dataset for generating training data.
     path = os.path.join(root, 'moving_mnist/train-images-idx3-ubyte.gz')
@@ -15,7 +15,7 @@ def load_mnist(root):
         mnist = mnist.reshape(-1, 28, 28)
     return mnist
 
-
+# Original MMNIST.
 def load_fixed_set(root):
     # Load the fixed dataset
     filename = 'moving_mnist/mnist_test_seq.npy'
@@ -24,7 +24,7 @@ def load_fixed_set(root):
     dataset = dataset[..., np.newaxis]
     return dataset
 
-
+# Custom MMNIST Class
 class MovingMNIST(data.Dataset):
     def __init__(self, root, is_train=True, n_frames_input=10, n_frames_output=10, num_objects=[2],
                  transform=None):
@@ -142,11 +142,11 @@ class MovingMNIST(data.Dataset):
     def __len__(self):
         return self.length
 
-
+# Real Data Loader
 def load_data(
         batch_size, val_batch_size,
         data_root, num_workers):
-
+    
     train_set = MovingMNIST(root=data_root, is_train=True,
                             n_frames_input=10, n_frames_output=10, num_objects=[2])
     test_set = MovingMNIST(root=data_root, is_train=False,

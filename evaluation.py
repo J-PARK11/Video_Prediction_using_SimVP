@@ -14,7 +14,10 @@ from utils import *
 
 '''
 230309 Try1 : python evaluation.py --epochs=200 --res_dir='./results/230309_OG_SimVP' --fig_dir='./figure/230309_OG_SimVP' --batch_size=16 --val_batch_size=16 --dataname='mmnist'
-
+230310 Try2 : python evaluation.py --epochs=1000 --res_dir='./results/230310_OG_SimVP_mmnist_1000' --fig_dir='./figure/230310_OG_SimVP_mmnist_1000' --batch_size=16 --val_batch_size=16 --dataname='mmnist'
+230313 Try3 : python evaluation.py --epochs=60 --res_dir='./results/230313_OG_SimVP_kth_60' --fig_dir='./figure/230313_OG_SimVP_kth_60' --batch_size=16 --val_batch_size=16 --dataname='kth'
+230314 Try4 : python evaluation.py --epochs=60 --res_dir='./results/230314_OG_SimVP_kth_60' --fig_dir='./figure/230314_OG_SimVP_kth_60' --batch_size=4 --val_batch_size=4 --dataname='kth'
+230314 Try5 : python evaluation.py --epochs=10 --res_dir='./results/230314_OG_SimVP_kth_1000' --fig_dir='./figure/230314_OG_SimVP_kth_1000' --batch_size=8 --val_batch_size=4 --dataname='kth' --log_step=5
 '''
 
 def create_parser():
@@ -32,11 +35,13 @@ def create_parser():
     parser.add_argument('--batch_size', default=16, type=int, help='Batch size')
     parser.add_argument('--val_batch_size', default=16, type=int, help='Batch size')
     parser.add_argument('--data_root', default='./data/')
-    parser.add_argument('--dataname', default='mmnist', choices=['mmnist', 'taxibj'])
+    parser.add_argument('--dataname', default='kth', choices=['mmnist', 'taxibj','kth'])
+    parser.add_argument('--out_frame', default=10, type=int, help='Num of output frame')    
     parser.add_argument('--num_workers', default=8, type=int)
 
     # model parameters
-    parser.add_argument('--in_shape', default=[10, 1, 64, 64], type=int,nargs='*') # [10, 1, 64, 64] for mmnist, [4, 2, 32, 32] for taxibj  
+    parser.add_argument('--in_shape', default=[10, 1, 120, 160], type=int,nargs='*')
+    # [10, 1, 64, 64] for mmnist, [4, 2, 32, 32] for taxibj, [10, 1, 120, 160] for kth
     parser.add_argument('--hid_S', default=64, type=int)
     parser.add_argument('--hid_T', default=256, type=int)
     parser.add_argument('--N_S', default=4, type=int)
@@ -96,13 +101,17 @@ class Eval:
         self.model.eval()
         print(f'Test Set Size : {len(self.test_loader)} * {self.args.val_batch_size}\n')            
 
-        inputs_lst, trues_lst, preds_lst = [], [], []
         # 배치 별 Prediction & Output 저장.
+        inputs_lst, trues_lst, preds_lst = [], [], []
+        timechecker = TimeHistory('Evaluation')
+        timechecker.begin()
         for batch_x, batch_y in tqdm(self.test_loader):
             pred_y = self.model(batch_x.to(self.device))
             list(map(lambda data, lst: lst.append(data.detach().cpu().numpy()), [
                  batch_x, batch_y, pred_y], [inputs_lst, trues_lst, preds_lst]))       
-        
+        timechecker.end()
+        timechecker.print(local_print=True)
+
         print(f'batch_x: {batch_x.shape}, {torch.mean(batch_x)}')
         print(f'batch_y: {batch_y.shape}, {torch.mean(batch_y)}')
         print(f'pred_y: {pred_y.shape}, {torch.mean(pred_y)}')
@@ -117,7 +126,13 @@ class Eval:
             os.makedirs(folder_path)
 
         # Test 결과 평가 지표 계산 및 출력.
-        mse, mae, ssim, psnr = metric(preds, trues, self.test_loader.dataset.mean, self.test_loader.dataset.std, True)
+        if self.args.dataname == 'kth':
+            test_loader_mean = self.test_loader.dataset[0][0].mean().numpy()
+            test_loader_std = self.test_loader.dataset[0][0].std().numpy()
+        else:
+            test_loader_mean = self.test_loader.dataset.mean
+            test_loader_std = self.test_loader.dataset.std        
+        mse, mae, ssim, psnr = metric(preds, trues, test_loader_mean, test_loader_std, True)
         print('test eval - mse:{:.4f}, mae:{:.4f}, ssim:{:.4f}, psnr:{:.4f}'.format(mse, mae, ssim, psnr))
 
         # Test 출력 결과 저장.

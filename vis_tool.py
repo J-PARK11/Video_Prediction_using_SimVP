@@ -9,10 +9,12 @@ from ipywidgets import widgets, Layout, HBox, VBox
 # 20장의 Frame을 모두 시각화.
 def multi_frame(dataset, path='', dataname=['mmnist','taxibj','kth']):
     # Channel definition by data.
-    if dataname == 'mmnist': cmap_param = 'gray'
+    if dataname in ['mmnist','kth','taxibj']: cmap_param = 'gray'
+    if dataname in ['taxibj'] : dataset = dataset[:,0,...]
+    row = dataset.shape[0]//4
 
     # Construct a figure on which we will visualize the images.
-    fig, axes = plt.subplots(4, 5, figsize=(10, 8))
+    fig, axes = plt.subplots(4, row, figsize=(10, 8))
 
     # Plot each of the sequential images for one data example.
     for idx, ax in enumerate(axes.flat):
@@ -27,22 +29,27 @@ def multi_frame(dataset, path='', dataname=['mmnist','taxibj','kth']):
 # True값과 Pred값 비교.
 def comparison(true, pred, path='', dataname=['mmnist','taxibj','kth']):
     # Channel definition by data.
-    if dataname == 'mmnist': cmap_param = 'gray'
+    if dataname in ['mmnist','kth','taxibj']: cmap_param = 'gray'
+    if dataname in ['taxibj'] : 
+        true = true[:,0,...]
+        pred = pred[:,0,...]
+    row = true.shape[0]//2
+
 
     # Construct a figure for the original and new frames.
-    fig, axes = plt.subplots(2, 10, figsize=(20, 4))
+    fig, axes = plt.subplots(2,row, figsize=(20, 4))
 
     # Plot the original frames.
     for idx, ax in enumerate(axes[0]):
-        ax.imshow(np.squeeze(true[idx+10]), cmap=cmap_param)
-        ax.set_title(f"True {idx + 11}")
+        ax.imshow(np.squeeze(true[idx+row]), cmap=cmap_param)
+        ax.set_title(f"True {idx + row + 1}")
         ax.axis("off")
 
     # Plot the new frames.
     for idx, ax in enumerate(axes[1]):
         # np.squeeze(pred[idx])*255
-        ax.imshow(np.squeeze(pred[idx+10]), cmap=cmap_param)
-        ax.set_title(f"Pred {idx + 11}")
+        ax.imshow(np.squeeze(pred[idx+row]), cmap=cmap_param)
+        ax.set_title(f"Pred {idx + row +1}")
         ax.axis("off")
 
     # Display the figure.
@@ -51,7 +58,10 @@ def comparison(true, pred, path='', dataname=['mmnist','taxibj','kth']):
 
 
 # Create Single Videos
-def create_single_video(dataset, path=''):
+def create_single_video(dataset, path='', dataname = ['mmnist','taxibj','kth']):
+    # Channel definition by data.
+    if dataname in ['taxibj'] : dataset = dataset[:,0,...]
+
     videos = []
     frames = dataset
     current = np.squeeze(frames)
@@ -63,10 +73,10 @@ def create_single_video(dataset, path=''):
     return videos
 
 # Create Multi Videos
-def create_multi_video(dataset, n, path=''):
+def create_multi_video(dataset, n, path='', dataname = ['mmnist','taxibj','kth']):
     videos = []
     for i, frames in enumerate(dataset[:n]):
         iter_path = (path[:-4] + str(i+1) + '.gif')
-        current = create_single_video(frames, path=iter_path)
+        current = create_single_video(frames, path=iter_path, dataname=dataname)
         videos.append(current)
     return videos
