@@ -9,9 +9,7 @@ from utils import print_log
 '''
 230314 dataset1 : python make_kth.py --freq=20 --strides=5 --current=0 --out_frame=10
 230315 dataset2 : python make_kth.py --freq=20 --strides=1 --current=0 --out_frame=10 --save_name='dataset_s1'
-
 '''
-
 
 def create_parser():
     parser = argparse.ArgumentParser(description='Make kth Kernel.')
@@ -20,7 +18,7 @@ def create_parser():
 
     # dataset parameters
     parser.add_argument('--data_root', default='./data/')
-    parser.add_argument('--dataname', default='kth', choices=['mmnist', 'taxibj','kth'])
+    parser.add_argument('--dataname', default='kth')
     parser.add_argument('--freq', default=20, type=int, help='Num of total Frames')
     parser.add_argument('--strides', default=5, type=int, help='Strides of video')
     parser.add_argument('--current', default=0, type=int, help='Start point of video')
@@ -30,7 +28,6 @@ def create_parser():
 
     # model parameters
     parser.add_argument('--in_shape', default=[10, 1, 120, 160], type=int,nargs='*')
-     # [10, 1, 64, 64] for mmnist, [4, 2, 32, 32] for taxibj, [10, 1, 120, 160] for kth
 
     return parser
 

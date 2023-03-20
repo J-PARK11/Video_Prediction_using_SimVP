@@ -7,8 +7,9 @@ from IPython.display import Image, display
 from ipywidgets import widgets, Layout, HBox, VBox
 
 # 20장의 Frame을 모두 시각화.
-def multi_frame(dataset, path='', dataname=['mmnist','taxibj','kth']):
+def multi_frame(dataset, path='', dataname=['mmnist','taxibj','kth','caltech']):
     # Channel definition by data.
+    cmap_param = 'jet'
     if dataname in ['mmnist','kth','taxibj']: cmap_param = 'gray'
     if dataname in ['taxibj'] : dataset = dataset[:,0,...]
     row = dataset.shape[0]//4
@@ -27,8 +28,9 @@ def multi_frame(dataset, path='', dataname=['mmnist','taxibj','kth']):
         plt.savefig(path)
 
 # True값과 Pred값 비교.
-def comparison(true, pred, path='', dataname=['mmnist','taxibj','kth']):
+def comparison(true, pred, path='', dataname=['mmnist','taxibj','kth','caltech']):
     # Channel definition by data.
+    cmap_param = 'jet'
     if dataname in ['mmnist','kth','taxibj']: cmap_param = 'gray'
     if dataname in ['taxibj'] : 
         true = true[:,0,...]
@@ -58,14 +60,19 @@ def comparison(true, pred, path='', dataname=['mmnist','taxibj','kth']):
 
 
 # Create Single Videos
-def create_single_video(dataset, path='', dataname = ['mmnist','taxibj','kth']):
+def create_single_video(dataset, path='', dataname = ['mmnist','taxibj','kth','caltech']):
     # Channel definition by data.
     if dataname in ['taxibj'] : dataset = dataset[:,0,...]
 
     videos = []
     frames = dataset
     current = np.squeeze(frames)
-    current = current[..., np.newaxis] * np.ones(3)
+    
+    # RGB Channel caltech axis control
+    if dataname == 'caltech':
+        pass
+    else : 
+        current = current[..., np.newaxis] * np.ones(3)
     current = (current * 255).astype(np.uint8)
 
     if path != '':
@@ -73,7 +80,7 @@ def create_single_video(dataset, path='', dataname = ['mmnist','taxibj','kth']):
     return videos
 
 # Create Multi Videos
-def create_multi_video(dataset, n, path='', dataname = ['mmnist','taxibj','kth']):
+def create_multi_video(dataset, n, path='', dataname = ['mmnist','taxibj','kth','caltech']):
     videos = []
     for i, frames in enumerate(dataset[:n]):
         iter_path = (path[:-4] + str(i+1) + '.gif')

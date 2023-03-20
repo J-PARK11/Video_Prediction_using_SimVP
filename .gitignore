@@ -2,3 +2,10 @@ data/
 results/
 __pycache__/
 API/__pycache__/
+free_space.ipynb
+figure/230309_OG_SimVP/
+figure/230314_OG_SimVP_kth_60/
+figure/230317_OG_SimVP_caltech_6_10_300/
+figure/230317_OG_SimVP_caltech_100/
+figure/debug/
+

@@ -5,8 +5,13 @@ import torch
 import pickle
 import logging
 import numpy as np
-from model import SimVP
 from tqdm import tqdm
+from torch.utils.tensorboard import SummaryWriter
+
+import warnings
+warnings.filterwarnings('ignore')
+
+from model import SimVP
 from API import *
 from utils import *
 
@@ -23,6 +28,7 @@ class Exp:
         self._get_data()    # ???? self.preparation()에서 한 번 함.
         self._select_optimizer()
         self._select_criterion()
+        self.early_stopping = EarlyStopping(patience=10, delta=0)
 
     # CUDA Connection
     def _acquire_device(self):
@@ -45,14 +51,16 @@ class Exp:
         self.path = osp.join(self.args.res_dir, self.args.ex_name)
         check_dir(self.path)
 
-        self.checkpoints_path = osp.join(self.path, 'checkpoints')
+        self.checkpoints_path = osp.join(self.path, 'checkpoints')   # checkpoints
         check_dir(self.checkpoints_path)
 
-        sv_param = osp.join(self.path, 'model_param.json')
+        self.tensorboard_path = osp.join(self.path, 'tensorboard')   # tensorboard
+
+        sv_param = osp.join(self.path, 'model_param.json')   # model_parameters
         with open(sv_param, 'w') as file_obj:
             json.dump(self.args.__dict__, file_obj)
 
-        for handler in logging.root.handlers[:]:
+        for handler in logging.root.handlers[:]:           # messeage log path
             logging.root.removeHandler(handler)
         logging.basicConfig(level=logging.INFO, filename=osp.join(self.path, 'log.log'),
                             filemode='a', format='%(asctime)s - %(message)s')
@@ -71,7 +79,7 @@ class Exp:
     # API/dataloader.py로부터 데이터 로드 : {MMNIST, taxibj}
     def _get_data(self):
         config = self.args.__dict__
-        self.train_loader, self.vali_loader, self.test_loader, self.data_mean, self.data_std = load_data(**config)
+        self.train_loader, self.vali_loader, self.test_loader, self.train_mean, self.train_std, self.test_mean, self.test_std = load_data(**config)
         self.vali_loader = self.test_loader if self.vali_loader is None else self.vali_loader
 
     # 옵티마이저 선택.
@@ -102,6 +110,8 @@ class Exp:
         config = args.__dict__
         recorder = Recorder(verbose=True)
         save_model_config(self.model, self.optimizer, self.criterion, self.path+'/'+'model_config.txt')
+
+        writer = SummaryWriter(self.tensorboard_path)
         timechecker = TimeHistory('Training')
 
         timechecker.begin()
@@ -117,6 +127,7 @@ class Exp:
                 pred_y = self.model(batch_x)
 
                 loss = self.criterion(pred_y, batch_y)
+
                 # 배치 단위 손실 값 저장
                 train_loss.append(loss.item())
                 train_pbar.set_description('train loss: {:.4f}'.format(loss.item()))
@@ -126,23 +137,32 @@ class Exp:
                 # 옵티마이저 및 스케줄러 다음 스텝 진행.
                 self.optimizer.step()
                 self.scheduler.step()
-
+                
             # 에포크 손실 값 = 배치 별 손실 값의 평균
             train_loss = np.average(train_loss)
+            writer.add_scalar("Loss/train", train_loss, epoch)
 
             # log_step 당 중간 학습 결과 출력 및 저장.
             if epoch % args.log_step == 0:
                 with torch.no_grad():
-                    vali_loss = self.vali(self.vali_loader)
+                    vali_loss = self.vali(self.vali_loader) 
                     if epoch % (args.log_step * 100) == 0:
                         self._save(name=str(epoch))
 
                 print_log("Epoch: {0} | Train Loss: {1:.4f} Vali Loss: {2:.4f}\n".format(
                     epoch + 1, train_loss, vali_loss))
                 recorder(vali_loss, self.model, self.path)
-        
+            writer.add_scalar("Loss/valid", vali_loss, epoch)
+
+            # 조기종료 검증
+            self.early_stopping(vali_loss)
+            if self.early_stopping.is_stop(): 
+                print_log("Early stopping")
+                break
+
         timechecker.end()
         timechecker.print()
+
 
         # API/recoder에서 저장한 Best_model load
         best_model_path = self.path + '/' + 'best_model.pth'
@@ -182,9 +202,9 @@ class Exp:
         trues = np.concatenate(trues_lst, axis=0)
 
         # 평가지표 계산 및 출력.
-        if self.args.dataname == 'kth':
-            vali_loader_mean = self.vali_loader.dataset[0][0].mean().numpy()
-            vali_loader_std = self.vali_loader.dataset[0][0].std().numpy()
+        if self.args.dataname in ['kth', 'caltech']:
+            vali_loader_mean = self.test_mean
+            vali_loader_std = self.test_std
         else:
             vali_loader_mean = self.vali_loader.dataset.mean
             vali_loader_std = self.vali_loader.dataset.std
@@ -216,9 +236,9 @@ class Exp:
             os.makedirs(folder_path)
 
         # Test 결과 평가 지표 계산 및 출력.
-        if self.args.dataname == 'kth':
-            test_loader_mean = self.test_loader.dataset[0][0].mean().numpy()
-            test_loader_std = self.test_loader.dataset[0][0].std().numpy()
+        if self.args.dataname in ['kth', 'caltech']:
+            test_loader_mean = self.test_mean
+            test_loader_std = self.test_std
         else:
             test_loader_mean = self.test_loader.dataset.mean
             test_loader_std = self.test_loader.dataset.std

@@ -12,6 +12,11 @@ def load_data(root, batch_size, val_batch_size, num_workers, out_frame):
     train_x, train_y = torch.FloatTensor(dataset['train_x']), torch.FloatTensor(dataset['train_y'])
     test_x, test_y = torch.FloatTensor(dataset['test_x']), torch.FloatTensor(dataset['test_y'])
     
+    train_mean = torch.cat([train_x,train_y],axis=1).mean().item()
+    train_std = torch.cat([train_x,train_y],axis=1).std().item()
+    test_mean = torch.cat([test_x,test_y],axis=1).mean().item()
+    test_std = torch.cat([test_x,test_y],axis=1).std().item()
+
     train_set = TensorDataset(train_x, train_y)
     test_set = TensorDataset(test_x, test_y)
 
@@ -19,7 +24,7 @@ def load_data(root, batch_size, val_batch_size, num_workers, out_frame):
     dataloader_train, dataloader_validation, dataloader_test, mean, std = make_dataloader(
         train_set, test_set, batch_size, val_batch_size, num_workers, out_frame
     )
-    return dataloader_train, dataloader_validation, dataloader_test, mean, std
+    return dataloader_train, dataloader_validation, dataloader_test, train_mean, train_std, test_mean, test_std
 
 
 def make_dataloader(train_set, test_set, batch_size, val_batch_size, num_workers, out_frame):

@@ -160,4 +160,4 @@ def load_data(
         test_set, batch_size=val_batch_size, shuffle=False, pin_memory=True, num_workers=num_workers)
 
     mean, std = 0, 1
-    return dataloader_train, dataloader_validation, dataloader_test, mean, std
+    return dataloader_train, dataloader_validation, dataloader_test, mean, std, mean, std

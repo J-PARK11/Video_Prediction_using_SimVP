@@ -91,3 +91,27 @@ def save_model_config(model, optim, loss, path):
 
     f.close()
 # --------------------------------------------------------------------#
+
+class EarlyStopping:
+    def __init__(self, patience=10, delta=0):
+        self.loss = np.inf
+        self.patience = 0
+        self.limit = patience
+        self.delta = delta
+        self.stop = False
+    
+    def __call__(self, loss):
+        # 성능이 향상될 경우.
+        if self.loss > loss:
+            self.loss = loss
+            self.patience = 0
+        # 성능이 향상되지 않을 경우.
+        else:
+            self.patience += 1
+
+        # Patience limit 확인.
+        if self.patience > self.limit : self.stop = True
+
+    def is_stop(self):
+        return self.stop
+    

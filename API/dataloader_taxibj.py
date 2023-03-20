@@ -34,4 +34,4 @@ def load_data(
     dataloader_test = torch.utils.data.DataLoader(
         test_set, batch_size=val_batch_size, shuffle=False, pin_memory=True, num_workers=num_workers)
 
-    return dataloader_train, None, dataloader_test, 0, 1
+    return dataloader_train, None, dataloader_test, 0, 1, 0, 1
