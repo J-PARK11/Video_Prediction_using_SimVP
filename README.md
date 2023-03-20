@@ -6,8 +6,10 @@ Research on how to predict future video sequences through deep learning methodol
 Research on a more practical and reasonable Video Prediction Modeling and Application based on "SimVP(CVPR2022)" thesis as the 1st project at HYU CVlab.
 
 ## Contents
-<p align="center"><img src = "figure/230317_OG_SimVP_caltech_300/multi_f_true0.jpg" width = '500'/></p>
-<p align="center"><img src = "figure/230317_OG_SimVP_caltech_300/multi_f_pred0.jpg" width = '500'/></p>
+<p align="left"><img src = "figure/230317_OG_SimVP_caltech_300/multi_f_true1.gif" width = '600'/></p>
+<p align="left"><img src = "figure/230317_OG_SimVP_caltech_300/multi_f_pred1.gif" width = '600'/></p>
+<p align="left"><img src = "figure/230317_OG_SimVP_caltech_300/multi_f_pred0.jpg" width = '600'/></p>
+<p align="left"><img src = "figure/230317_OG_SimVP_caltech_300/multi_f_true0.jpg" width = '600'/></p>
 
 ## Dependencies
 * torch
